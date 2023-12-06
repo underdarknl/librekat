@@ -11,6 +11,8 @@ services:
       test: ["CMD", "rabbitmqctl", "status"]
       interval: 5s
       retries: 10
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     env_file:
       - .env-defaults
       - .env
@@ -251,3 +253,4 @@ volumes:
   keiko-reports:
   xtdb-data:
   jaeger-data:
+  rabbitmq-data:
