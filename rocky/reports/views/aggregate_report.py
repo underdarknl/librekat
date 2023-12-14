@@ -1,7 +1,7 @@
 from typing import Any, Dict, Tuple
 
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -148,7 +148,7 @@ class AggregateReportView(BreadcrumbsAggregateReportView, BaseReportView, Templa
                         report = report_type(self.octopoes_api_connector)
                         data = report.generate_data(ooi, valid_time=self.valid_time)
                         template = report.template_path
-                        report_data[ooi][report_type.name] = {"data": data, "template": template}
+                        report_data[ooi][str(report_type.name)] = {"data": data, "template": template}
         post_processed_data = aggregate_report.post_process_data(report_data)
 
         return aggregate_template, post_processed_data, report_data
@@ -160,8 +160,13 @@ class AggregateReportView(BreadcrumbsAggregateReportView, BaseReportView, Templa
         context["template"] = template
         context["post_processed_data"] = post_processed_data
         context["report_data"] = report_data
-        context["report_download_url"] = url_with_querystring(
+        context["report_download_pdf_url"] = url_with_querystring(
             reverse("aggregate_report_pdf", kwargs={"organization_code": self.organization.code}),
+            True,
+            **self.request.GET,
+        )
+        context["report_download_json_url"] = url_with_querystring(
+            reverse("aggregate_report_json", kwargs={"organization_code": self.organization.code}),
             True,
             **self.request.GET,
         )
@@ -176,3 +181,10 @@ class AggregateReportPDFView(AggregateReportView, WeasyTemplateResponseMixin):
     pdf_options = {
         "pdf_variant": "pdf/ua-1",
     }
+
+
+class AggregateReportJSONView(AggregateReportView):
+    def get(self, request, *args, **kwargs):
+        template, post_processed_data, report_data = self.generate_reports_for_oois()
+
+        return JsonResponse(report_data)

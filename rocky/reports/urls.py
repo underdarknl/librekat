@@ -1,6 +1,7 @@
 from django.urls import path
 
 from reports.views.aggregate_report import (
+    AggregateReportJSONView,
     AggregateReportPDFView,
     AggregateReportView,
     LandingAggregateReportView,
@@ -46,5 +47,6 @@ urlpatterns += [
     ),
     path("aggregate-report/setup-scan/", SetupScanAggregateReportView.as_view(), name="aggregate_report_setup_scan"),
     path("aggregate-report/view/", AggregateReportView.as_view(), name="aggregate_report_view"),
-    path("aggregate-report/view/pdf", AggregateReportPDFView.as_view(), name="aggregate_report_pdf"),
+    path("aggregate-report/view/pdf/", AggregateReportPDFView.as_view(), name="aggregate_report_pdf"),
+    path("aggregate-report/view/json/", AggregateReportJSONView.as_view(), name="aggregate_report_json"),
 ]

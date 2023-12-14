@@ -4,11 +4,16 @@
     <div>
         <div class="horizontal-view toolbar">
             <h1>{% translate "OpenKAT Aggregate Report" %}</h1>
-        <a href="{{ report_download_url }}"
+        <a href="{{ report_download_pdf_url }}"
            target="_blank"
            rel="noopener noreferrer"
-           class="button">{% translate "Download report" %} <span class="icon ti-chevron-down">Chevron down icoon</span>
+           class="button">{% translate "Download PDF" %} <span class="icon ti-chevron-down">Chevron down icoon</span>
     </a>
+<a href="{{ report_download_json_url }}"
+   target="_blank"
+   rel="noopener noreferrer"
+   class="button">{% translate "Download JSON" %} <span class="icon ti-chevron-down">Chevron down icoon</span>
+</a>
 </div>
 <div>
     <p>{% translate "This is the OpenKAT report for organization" %} {{ organization.name }}</p>
