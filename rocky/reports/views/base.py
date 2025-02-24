@@ -500,6 +500,7 @@ class ReportFinalSettingsView(BaseReportView, SchedulerView, TemplateView):
         context = super().get_context_data(**kwargs)
         context["report_schedule_form_start_date"] = self.get_report_schedule_form_start_date_time_recurrence()
         context["report_name_form"] = self.get_report_name_form()
+        context["report_format_form"] = self.get_report_format_form()
         return context
 
 

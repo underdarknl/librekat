@@ -7,6 +7,13 @@ from tools.forms.base import BaseRockyForm, DateInput
 
 from reports.report_types.definitions import Report
 
+REPORT_FORMAT_CHOICES = (
+    ("combine-all", _("Combine everything into one report")),
+    ("separate-report-type", _("Separate report per report type")),
+    ("separate-object", _("Separate report per object")),
+    ("separate-all", _("Separate report per report type and object")),
+)
+
 
 class OOITypeMultiCheckboxForReportForm(BaseRockyForm):
     ooi_type = forms.MultipleChoiceField(
@@ -132,4 +139,10 @@ class CustomReportScheduleForm(BaseRockyForm):
 class ReportNameForm(BaseRockyForm):
     report_name = forms.CharField(
         label=_("Report name format"), required=True, initial="${report_type} for ${oois_count} objects"
+    )
+
+
+class ReportFormatForm(BaseRockyForm):
+    report_format = forms.MultipleChoiceField(
+        label=_(""), required=True, choices=REPORT_FORMAT_CHOICES, widget=forms.CheckboxSelectMultiple
     )

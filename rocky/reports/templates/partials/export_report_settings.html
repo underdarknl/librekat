@@ -7,18 +7,28 @@
 <section>
     <div>
         {% if selected_report_types %}
-            <h2>{% translate "Report schedule" %}</h2>
-            <p>
-                {% blocktranslate trimmed %}
-                    When scheduling your report, you have two options. You can either choose to generate it just once now,
-                    or set it to run automatically at regular intervals, like daily, weekly,
-                    or monthly. If you need the report just for a single occasion, select the one-time option.
-                {% endblocktranslate %}
-            </p>
             <form id="generate_report" class="inline" method="post" action="{{ next }}">
                 {% csrf_token %}
                 {% include "forms/report_form_fields.html" %}
+
+                <h2>{% translate "Report schedule" %}</h2>
+                <p>
+                    {% blocktranslate trimmed %}
+                        When scheduling your report, you have two options. You can either choose to generate it just once now,
+                        or set it to run automatically at regular intervals, like daily, weekly,
+                        or monthly. If you need the report just for a single occasion, select the one-time option.
+                    {% endblocktranslate %}
+                </p>
                 {% include "partials/form/fieldset.html" with fields=report_schedule_form_start_date fieldset_parent_class="column-2" %}
+
+                <h2>{% translate "Report format" %}</h2>
+                <p>
+                    {% blocktranslate trimmed %}
+                        Setup your export preferences. You can choose multiple options.
+                        Choosing multiple options will result in multiple reports.
+                    {% endblocktranslate %}
+                </p>
+                {% include "partials/form/fieldset.html" with fields=report_format_form %}
 
                 <h2>{% translate "Report name" %}</h2>
                 <p>
