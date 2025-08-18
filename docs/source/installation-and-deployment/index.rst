@@ -8,16 +8,19 @@ Contains documentation for developers and contributors.
    :caption: Contents
 
    install
-   containers
-   debian-install
+   production-docker-environment
+   separate-boefje-workers
+   production-debian-environment
+   developer-environment
    scripts
    hardening
    local-install
    windows-install
    gitpod
-   nginx
+   adding-proxy-to-openkat
    s3-buckets
    debugging-troubleshooting
+   events-and-logging
    environment-settings/index
    external-authentication
    cveapi

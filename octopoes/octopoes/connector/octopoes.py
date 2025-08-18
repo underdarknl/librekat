@@ -27,7 +27,9 @@ from octopoes.models.pagination import Paginated
 from octopoes.models.transaction import TransactionRecord
 from octopoes.models.tree import ReferenceTree
 from octopoes.models.types import OOIType
-from octopoes.types import DECLARATION_CREATED, OBJECT_DELETED, OBSERVATION_CREATED, ORIGIN_DELETED
+from octopoes.types import AFFIRMATION_CREATED, DECLARATION_CREATED, OBJECT_DELETED, OBSERVATION_CREATED, ORIGIN_DELETED
+
+HydratedReportTypeAdapter = TypeAdapter(dict[UUID, HydratedReport])
 
 
 class OctopoesAPIConnector:
@@ -204,7 +206,7 @@ class OctopoesAPIConnector:
             content=affirmation.model_dump_json(),
         )
 
-        self.logger.info("Saved affirmation", affirmation=affirmation, event_code=DECLARATION_CREATED)
+        self.logger.info("Saved affirmation", affirmation=affirmation, event_code=AFFIRMATION_CREATED)
 
     def save_scan_profile(self, scan_profile: ScanProfile, valid_time: datetime) -> None:
         params = {"valid_time": str(valid_time)}
@@ -303,6 +305,27 @@ class OctopoesAPIConnector:
         res = self.session.get(f"/{self.client}/reports", params=params)
 
         return TypeAdapter(Paginated[HydratedReport]).validate_json(res.content)
+
+    def bulk_list_reports(
+        self, valid_time: datetime, reports_filters: list[tuple[str, str]]
+    ) -> dict[UUID, HydratedReport]:
+        """
+        Return HydratedReport over multiple clients.
+        The reports_filter is a list of tuples of (client, recipe_id).
+        """
+        res = self.session.post("/reports", json=reports_filters, params={"valid_time": str(valid_time)})
+
+        return HydratedReportTypeAdapter.validate_json(res.content)
+
+    def list_object_clients(self, reference: Reference, clients: set[str], valid_time: datetime) -> dict[str, OOIType]:
+        """
+        Return the clients from the provided list that have the given OOI at the valid_time.
+        """
+        res = self.session.get(
+            "/object-clients", params={"reference": reference, "clients": list(clients), "valid_time": str(valid_time)}
+        )
+
+        return TypeAdapter(dict[str, OOIType]).validate_json(res.content)
 
     def get_report(self, report_id: str, valid_time: datetime) -> HydratedReport:
         params = {"valid_time": str(valid_time)}
