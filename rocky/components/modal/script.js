@@ -15,6 +15,10 @@ export function openDialogFromUrl() {
     if (dialog.querySelector(".error")) {
       showModalBasedOnAnchor(id);
     }
+
+    if (window.location.hash === "#" + id && dialog.open) {
+      dialog.close();
+    }
   }
 }
 

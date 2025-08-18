@@ -9,10 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-20 07:38+0000\n"
-"PO-Revision-Date: 2025-08-22 09:39+0000\n"
-"Last-Translator: Weblate Translation Memory <noreply-mt-weblate-translation-"
-"memory@weblate.org>\n"
+"POT-Creation-Date: 2025-07-22 13:42+0000\n"
+"PO-Revision-Date: 2025-04-23 18:03+0000\n"
+"Last-Translator: Wim Benes <fryskefirefox@gmail.com>\n"
 "Language-Team: Frisian <https://hosted.weblate.org/projects/openkat/nl-kat-"
 "coordination/fy/>\n"
 "Language: fy\n"
@@ -802,7 +801,7 @@ msgstr "Befiningen per organisaasje"
 
 #: crisis_room/templates/crisis_room_findings.html
 msgid ""
-"This table shows the findings that have been identified for each "
+"This table shows the findings that have been identiefied for each "
 "organization, sorted by the finding types and grouped by organizations. This "
 "data is based on the latest Crisis Room Findings Report of each organization."
 msgstr ""
@@ -7646,6 +7645,7 @@ msgstr "Raw-bestân kin net nei Bytes oplaad wurde: %s"
 msgid "Raw file successfully added."
 msgstr "Raw-bestân mei sukses tafoege."
 
+
 #~ msgid "Clearance level has been set"
 #~ msgstr "Frijwarringsnivo is ynsteld"
 
@@ -7658,7 +7658,6 @@ msgstr "Raw-bestân mei sukses tafoege."
 #~ msgstr ""
 #~ "Boefje dy’t in scannivo hat ûnder of lyk oan it frijwarringsnivo, mei in "
 #~ "objekt scanne."
-
 #~ msgid "The Email must be set"
 #~ msgstr "It e-mailadres moat ynfolle wurde"
 

@@ -14,5 +14,6 @@ Contains references to the documentations of the Basics of OpenKAT
    bits
    normalizers
    questions-and-configs
+   users-and-organisations
    boefjes-whiskers-bits
    verify-timestamps
