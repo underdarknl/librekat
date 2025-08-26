@@ -3,7 +3,7 @@ const language = htmlElement.getAttribute("lang");
 const organization_code = htmlElement.getAttribute("data-organization-code");
 
 const task_buttons = document.querySelectorAll(
-  ".expando-button.boefjes-task-list-table-row, .expando-button.normalizer-list-table-row"
+  ".expando-button.boefjes-task-list-table-row, .expando-button.normalizer-list-table-row",
 );
 const asyncoffset = 5; // time (in seconds) to allow for the database to actually save the OOIs
 
@@ -20,19 +20,21 @@ task_buttons.forEach((button) => {
   const task_type = button.closest("tr").getAttribute("data-task-type");
   const expando_row = button.closest("tr").nextElementSibling;
   var json_url = "";
-  if (task_type == "boefje"){
+  if (task_type == "boefje") {
     json_url =
-        "/" +
-        language +
-        "/" +
-        organization +
-        "/bytes/" +
-        encodeURI(task_id) +
-        "/raw?format=json";
+      "/" +
+      language +
+      "/" +
+      organization +
+      "/bytes/" +
+      encodeURI(task_id) +
+      "/raw?format=json";
     expando_row
-          .querySelector("#yielded-rawfiles-" + raw_task_id).classList.remove("hidden");
+      .querySelector("#yielded-rawfiles-" + raw_task_id).classList
+      .remove("hidden");
     expando_row
-          .querySelector("#yielded-objects-" + raw_task_id).classList.add("hidden");
+      .querySelector("#yielded-objects-" + raw_task_id).classList
+      .add("hidden");
   } else {
     json_url =
         "/" +
@@ -42,9 +44,11 @@ task_buttons.forEach((button) => {
         "/tasks/normalizers/" +
         encodeURI(task_id);
     expando_row
-          .querySelector("#yielded-objects-" + raw_task_id).classList.remove("hidden");
+      .querySelector("#yielded-objects-" + raw_task_id).classList
+      .remove("hidden");
     expando_row
-          .querySelector("#yielded-rawfiles-" + raw_task_id).classList.add("hidden");
+      .querySelector("#yielded-rawfiles-" + raw_task_id).classList
+      .add("hidden");
   }
   const getJson = (url, callback) => {
     var xhr = new XMLHttpRequest();
@@ -52,7 +56,7 @@ task_buttons.forEach((button) => {
     xhr.responseType = "json";
     xhr.onload = function () {
       var status = xhr.status;
-      
+
       const messages = expando_row.querySelectorAll(".error, .explanation");
       messages.forEach((element) => {
         element.remove();
@@ -79,7 +83,8 @@ task_buttons.forEach((button) => {
         );
 
         // Insert the HTML snippet into the expando row, which is the buttons parent TR next TR-element sibling.
-        expando_row.querySelector("#yielded-rawfiles-" + raw_task_id)
+        expando_row
+          .querySelector("#yielded-rawfiles-" + raw_task_id)
           .appendChild(error_element);
       }
     };
@@ -90,127 +95,127 @@ task_buttons.forEach((button) => {
     // only load the results once, by checking if we are already showing output
     if (
       !button
-        .closest("tr").nextElementSibling
-        .querySelector(".yielded-rawfiles, .yielded-objects")
+        .closest("tr")
+        .nextElementSibling.querySelector(".yielded-rawfiles, .yielded-objects")
     ) {
       // Retrieve JSON containing yielded raw files or oois of task.
       getJson(json_url, function(data){
-            let rawfiles_element = document.createElement("div");
-            rawfiles_element.classList.add("yielded-rawfiles");
+        let rawfiles_element = document.createElement("div");
+        rawfiles_element.classList.add("yielded-rawfiles");
 
-            let yielded_objects_element = document.createElement("div");
-            yielded_objects_element.classList.add("yielded-objects");
-            if (data["oois"] && data["oois"].length > 0) {
-              const url =
-                "/" +
-                language +
-                "/" +
-                escapeHTMLEntities(encodeURIComponent(organization));
-              let object_list = "";
-              // set the observed at time a fews seconds into the future, as the job finish time is not the same as the ooi-creation time. Due to async reasons the object might be a bit slow.
-              data["timestamp"] = Date.parse(data["valid_time"] + "Z");
-              data["valid_time_async"] = new Date(
-                data["timestamp"] + asyncoffset * 1000,
-              )
-                .toISOString()
-                .substring(0, 19); // strip milliseconds
-              // Build HTML snippet for every yielded object.
-              data["oois"].forEach((object) => {
-                object_list += `<li><a href='${url}/objects/detail/?observed_at=${data["valid_time_async"]}&ooi_id=${escapeHTMLEntities(encodeURIComponent(object))}'>${escapeHTMLEntities(object)}</a></li>`;
-              });
-              yielded_objects_element.innerHTML = `<ul>${object_list}</ul>`;
-            } else if(task_type == "normalizer") {
-              yielded_objects_element.innerHTML = "<p class='explanation'>task yielded no objects.</p>";
+        let yielded_objects_element = document.createElement("div");
+        yielded_objects_element.classList.add("yielded-objects");
+        if (data["oois"] && data["oois"].length > 0) {
+          const url =
+            "/" +
+            language +
+            "/" +
+            escapeHTMLEntities(encodeURIComponent(organization));
+          let object_list = "";
+          // set the observed at time a fews seconds into the future, as the job finish time is not the same as the ooi-creation time. Due to async reasons the object might be a bit slow.
+          data["timestamp"] = Date.parse(data["valid_time"] + "Z");
+          data["valid_time_async"] = new Date(
+            data["timestamp"] + asyncoffset * 1000,
+          )
+            .toISOString()
+            .substring(0, 19); // strip milliseconds
+          // Build HTML snippet for every yielded object.
+          data["oois"].forEach((object) => {
+            object_list += `<li><a href='${url}/objects/detail/?observed_at=${data["valid_time_async"]}&ooi_id=${escapeHTMLEntities(encodeURIComponent(object))}'>${escapeHTMLEntities(object)}</a></li>`;
+          });
+          yielded_objects_element.innerHTML = `<ul>${object_list}</ul>`;
+        } else if(task_type == "normalizer") {
+          yielded_objects_element.innerHTML = "<p class='explanation'>task yielded no objects.</p>";
+        }
+        expando_row.querySelector("#yielded-objects-" + raw_task_id)
+          .appendChild(yielded_objects_element);
+        
+        if (data.length > 0) {
+          let rawfiles_list = document.createElement("div");
+          // Build HTML snippet for every yielded rawfiles.
+          data.forEach((rawfile) => {
+            mimetypes = "";
+            rawfile["mime_types"].forEach((mime_type) => {
+              mimetypes += `<li>${mime_type["value"]}</li>`;
+            });
+            rawdata = atob(rawfile["raw_file"]);
+            let rawfile_container = document.createElement("div");
+            let signed = rawfile["signing_provider_url"] ? `, signed by <a href="${rawfile["signing_provider_url"]}">${rawfile["signing_provider_url"]}</a>` : '';
+            rawfile_container.innerHTML = `<h3 id="raw-file-${rawfile["id"]}">File id: ${rawfile["id"]}</h3>
+                <div role="tablist"
+                   aria-labelledby="raw-file-${rawfile["id"]}"
+                   class="manual">
+                    <div class="button-container">
+                        <button id="plain-${rawfile["id"]}"
+                            type="button"
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="plain-${rawfile["id"]}-panel">
+                            Plain text
+                        </button>
+                        <button id="json-${rawfile["id"]}"
+                            type="button"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="json-${rawfile["id"]}-panel">
+                            Json
+                        </button>
+                        <button id="hex-${rawfile["id"]}"
+                            type="button"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="hex-${rawfile["id"]}-panel">
+                            HEX view
+                        </button>
+                    </div>
+                <div id="plain-${rawfile["id"]}-panel"
+                   role="tabpanel"
+                   aria-labelledby="#plain-${rawfile["id"]}">
+                    <pre class="plain"><code></code></pre>
+                </div>
+                <div id="json-${rawfile["id"]}-panel"
+                   role="tabpanel"
+                   aria-labelledby="#json-${rawfile["id"]}-panel"
+                   class="hidden">
+                    <pre class="json"></pre>
+                </div>
+                <div id="hex-${rawfile["id"]}-panel"
+                   role="tabpanel"
+                   aria-labelledby="#hex-${rawfile["id"]}">
+                  <table class="hex"></table>
+                </div>
+            <h5>Mimetypes:</h5>
+              <ul class="tags">${mimetypes}</ul>
+            <p>Secure Hash: <code>${rawfile["secure_hash"]} ${signed}</code></p>`;
+            rawfiles_list.appendChild(rawfile_container);
+            rawfile_container.querySelector("pre.plain code").innerText = rawdata;
+            // Try and populate Json view
+            try {
+              jsondata = JSON.parse(rawdata);
+              rawfile_container.querySelector("pre.json").innerText = JSON.stringify(jsondata, null, "\t")
+              rawfile_container.querySelector(`#json-${rawfile["id"]}-panel`).classList.remove("hidden");
+              rawfile_container.querySelector(`#json-${rawfile["id"]}`).classList.remove("hidden");
+            } catch (e) {
+              rawfile_container.querySelector(`#json-${rawfile["id"]}-panel`).classList.add("hidden");
+              rawfile_container.querySelector(`#json-${rawfile["id"]}`).classList.add("hidden");
             }
-            expando_row.querySelector("#yielded-objects-" + raw_task_id)
-              .appendChild(yielded_objects_element);
-            
-            if (data.length > 0) {
-              let rawfiles_list = document.createElement("div");
-              // Build HTML snippet for every yielded rawfiles.
-              data.forEach((rawfile) => {
-                mimetypes = "";
-                rawfile["mime_types"].forEach((mime_type) => {
-                  mimetypes += `<li>${mime_type["value"]}</li>`;
-                });
-                rawdata = atob(rawfile["raw_file"]);
-                let rawfile_container = document.createElement("div");
-                let signed = rawfile["signing_provider_url"] ? `, signed by <a href="${rawfile["signing_provider_url"]}">${rawfile["signing_provider_url"]}</a>` : '';
-                rawfile_container.innerHTML = `<h3 id="raw-file-${rawfile["id"]}">File id: ${rawfile["id"]}</h3>
-                    <div role="tablist"
-                       aria-labelledby="raw-file-${rawfile["id"]}"
-                       class="manual">
-                        <div class="button-container">
-                            <button id="plain-${rawfile["id"]}"
-                                type="button"
-                                role="tab"
-                                aria-selected="true"
-                                aria-controls="plain-${rawfile["id"]}-panel">
-                                Plain text
-                            </button>
-                            <button id="json-${rawfile["id"]}"
-                                type="button"
-                                role="tab"
-                                aria-selected="false"
-                                aria-controls="json-${rawfile["id"]}-panel">
-                                Json
-                            </button>
-                            <button id="hex-${rawfile["id"]}"
-                                type="button"
-                                role="tab"
-                                aria-selected="false"
-                                aria-controls="hex-${rawfile["id"]}-panel">
-                                HEX view
-                            </button>
-                        </div>
-                    <div id="plain-${rawfile["id"]}-panel"
-                       role="tabpanel"
-                       aria-labelledby="#plain-${rawfile["id"]}">
-                        <pre class="plain"><code></code></pre>
-                    </div>
-                    <div id="json-${rawfile["id"]}-panel"
-                       role="tabpanel"
-                       aria-labelledby="#json-${rawfile["id"]}-panel"
-                       class="hidden">
-                        <pre class="json"></pre>
-                    </div>
-                    <div id="hex-${rawfile["id"]}-panel"
-                       role="tabpanel"
-                       aria-labelledby="#hex-${rawfile["id"]}"
-                       class="hidden">
-                      <table class="hex"></table>
-                    </div>
-                <h5>Mimetypes:</h5>
-                  <ul class="tags">${mimetypes}</ul>
-                <p>Secure Hash: <code>${rawfile["secure_hash"]} ${signed}</code></p>`;
-                rawfiles_list.appendChild(rawfile_container);
-                rawfile_container.querySelector("pre.plain code").innerText = rawdata;
-                try {
-                  jsondata = JSON.parse(rawdata);
-                  rawfile_container.querySelector("pre.json").innerText = JSON.stringify(jsondata, null, "\t")
-                  rawfile_container.querySelector("pre.json").classList.remove("hidden");
-                  rawfile_container.querySelector(`#hex-${rawfile["id"]}`).classList.add("hidden");
-                  rawfile_container.querySelector(`#hex-${rawfile["id"]}-panel`).classList.add("hidden");
-                } catch (e) {
-                  rawfile_container.querySelector(`#json-${rawfile["id"]}-panel`).classList.add("hidden");
-                  rawfile_container.querySelector(`#json-${rawfile["id"]}`).classList.add("hidden");
-                  let hex_table = rawfile_container.querySelector("table.hex")
-                  let rawbytes = new TextEncoder();
-                  renderHexTable(hex_table, rawbytes.encode(rawdata));
-                }
-              });
+            // Poplate hex view
+            let hex_table = rawfile_container.querySelector("table.hex")
+            let rawbytes = new TextEncoder();
+            renderHexTable(hex_table, rawbytes.encode(rawdata));
+          });
 
-              rawfiles_element.appendChild(rawfiles_list);
-              
-            } else if(task_type == "boefje") {
-              rawfiles_element.innerHTML =
-                "<p class='explanation'>Task yielded no raw files.</p>";
-            }
-            // Insert HTML snippet into the expando row, which is the buttons parent TR next TR-element sibling.
-            expando_row.querySelector("#yielded-rawfiles-" + raw_task_id)
-              .appendChild(rawfiles_element);
-            initTablist();
-        });
+          rawfiles_element.appendChild(rawfiles_list);
+          
+        } else if(task_type == "boefje") {
+          rawfiles_element.innerHTML =
+            "<p class='explanation'>Task yielded no raw files.</p>";
+        }
+        // Insert HTML snippet into the expando row, which is the buttons parent TR next TR-element sibling.
+        expando_row.querySelector("#yielded-rawfiles-" + raw_task_id)
+          .appendChild(rawfiles_element);
+        initTablist();
+    });
     } else {
       return;
     }
@@ -221,8 +226,12 @@ function renderHexTable(hex_table, bytes) {
   const rowLength = 16;
 
   const headerRow = document.createElement("tr");
-  headerRow.innerHTML = "<th>Offset</th>" +
-    Array.from({ length: rowLength }, (_, i) => `<th>${i.toString(16).padStart(2, '0').toUpperCase()}</th>`).join("") +
+  headerRow.innerHTML = 
+    "<th>Offset</th>" +
+    Array.from(
+      { length: rowLength },
+      (_, i) => `<th>${i.toString(16).padStart(2, '0').toUpperCase()}</th>`,
+    ).join("") +
     "<th>ASCII</th>";
   hex_table.appendChild(headerRow);
 
@@ -236,21 +245,29 @@ function renderHexTable(hex_table, bytes) {
       const byte = bytes[i + j];
       if (byte !== undefined) {
         hexBytes.push(byte.toString(16).padStart(2, "0").toUpperCase());
-        const char = byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.';
+        const char = 
+          byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : ".";
         ascii.push(char);
       } else {
-        hexBytes.push('  ');
-        ascii.push('.'); // placeholder char
+        hexBytes.push("  ");
+        ascii.push("."); // placeholder char
       }
     }
     row.addEventListener("mouseover", (event) => {
-      let charposition = Array.from(event.target.parentNode.children).indexOf(event.target);
-      if(charposition>0){
-          let asciistring = event.target.parentElement.querySelector(".ascii").textContent
-          let highlightedstring = asciistring.substring(0, charposition-1) 
-            + "<span class='highlight'>"+escapeHTMLEntities(asciistring.charAt(charposition-1))+"</span>" 
-            + asciistring.substring(charposition);
-          event.target.parentElement.querySelector(".ascii").innerHTML = highlightedstring;
+      let charposition = Array.from(event.target.parentNode.children).indexOf(
+        event.target,
+      );
+      if (charposition > 0) {
+          let asciistring = 
+            event.target.parentElement.querySelector(".ascii").textContent;
+          let highlightedstring = 
+            escapeHTMLEntities(asciistring.substring(0, charposition-1)) +
+            "<span class='highlight'>" +
+            escapeHTMLEntities(asciistring.charAt(charposition-1)) +
+            "</span>" +
+            escapeHTMLEntities(asciistring.substring(charposition));
+          event.target.parentElement.querySelector(".ascii").innerHTML = 
+            highlightedstring;
       }
     });
     row.addEventListener("mouseout", (event) => {
