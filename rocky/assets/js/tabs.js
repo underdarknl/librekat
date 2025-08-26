@@ -126,10 +126,10 @@ class TabsManual {
   }
 }
 
-function initTablist(){
+function initTablist() {
   var tablists = document.querySelectorAll("[role=tablist].manual");
   for (var i = 0; i < tablists.length; i++) {
-      new TabsManual(tablists[i]);
+    new TabsManual(tablists[i]);
   }
 }
 
