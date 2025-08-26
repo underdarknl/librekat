@@ -23,8 +23,8 @@
   border-radius: var(--border-radius-s);
   background-color: var(--colors-white);
   box-sizing: border-box;
-  border:0;
-  margin:2px;
+  border: 0;
+  margin: 2px;
 
   /* Text and icon styling */
   text-decoration: none;
@@ -54,6 +54,6 @@
   margin-top: -10px;
 }
 
-[role="tabpanel"] > pre:only-child{
+[role="tabpanel"] > pre:only-child {
   margin: -5px;
 }
