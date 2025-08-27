@@ -12,12 +12,15 @@ def run(input_ooi: dict, raw: bytes) -> Iterable[NormalizerOutput]:
         for line in raw.splitlines():
             # Extract and parse values
             data = json.loads(line)
-            id_ = data["info"]["classification"]["cve-id"][0].upper()
+            info = data["info"]
+            if "classification" not in info or "cve-id" not in info["classification"]:
+                continue
+            cveid = info["classification"]["cve-id"][0].upper()
             description = data["info"]["description"]
             curl_command = data["curl-command"]
 
             # Create instances of CVEFindingType and Finding classes
-            cve_finding_type = CVEFindingType(id=id_)
+            cve_finding_type = CVEFindingType(id=cveid)
             yield cve_finding_type
 
             finding = Finding(
