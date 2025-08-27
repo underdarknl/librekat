@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load compress %}
 
 <div class="horizontal-scroll">
     <h2>{% translate "Tasks" %}</h2>
@@ -19,7 +20,9 @@
             </thead>
             <tbody>
                 {% for task in task_list %}
-                    <tr data-task-id="{{ task.id }}">
+                    <tr data-task-id="{{ task.id }}"
+                        data-task-type="{{ task.type }}"
+                        {% if not organization %}data-organization-code="{{ task.data.organization }}"{% endif %}>
                         <td class="nowrap">
                             <i class="icon {{ task.status.value }}"></i>&nbsp;{{ task.status.value|capfirst }}
                         </td>
@@ -58,3 +61,11 @@
 
     {% endif %}
 </div>
+
+{% block html_at_end_body %}
+    {{ block.super }}
+    {% compress js %}
+        <script src="{% static "js/taskDetails.js" %}" nonce="{{ request.csp_nonce }}"></script>
+        <script src="{% static "js/tabs.js" %}" nonce="{{ request.csp_nonce }}"></script>
+    {% endcompress %}
+{% endblock html_at_end_body %}
