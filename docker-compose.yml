@@ -312,16 +312,16 @@ networks:
     enable_ipv6: true
     ipam:
       config:
-        - subnet: fc42:ca7::/64
-        - subnet: 172.30.0.0/16
-          gateway: 172.30.0.1
+        - subnet: fc42:ca7:2::/64
+        - subnet: 172.32.0.0/16
+          gateway: 172.32.0.1
   boefjes:
     enable_ipv6: true
     ipam:
       config:
-        - subnet: fc42:ca7:1::/64
-        - subnet: 172.31.0.0/16
-          gateway: 172.31.0.1
+        - subnet: fc42:ca7:3::/64
+        - subnet: 172.33.0.0/16
+          gateway: 172.33.0.1
 
 volumes:
   postgres-data:
