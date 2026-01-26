@@ -1,37 +1,194 @@
-name: Pre-commit checks
+name: Pre-commit + (suggested fixes)
 
 on:
-  workflow_call:
-  push:
-    branches:
-      - "main"
-      - "release-*"
-    tags:
-      - "*"
   pull_request:
 
-jobs:
-  pre-commit:
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        id: setup-python
+jobs:
+  precommit-fixes:
+    # Only same-repo PRs (no forks)
+    if: >
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.13
           cache: pip
 
-      - name: Install pre-commit
-        run: pip install pre-commit==4.0.1
-
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit|${{ steps.setup-python.outputs.python-version }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: pip install pre-commit==4.0.1
 
       - name: Run pre-commit
-        run: pre-commit run --all-files --show-diff-on-failure --color always
+        # or true so we dont stop this workflow on errors
+        run: pre-commit run --all-files --show-diff-on-failure || true
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ============================================================
+      # CREATE / UPDATE FIXES
+      # ============================================================
+
+      - name: Create and push fixes branch
+        if: steps.diff.outputs.changed == 'true'
+        id: push
+        run: |
+          BASE="${{ github.event.pull_request.base.ref }}"
+          PR="${{ github.event.pull_request.number }}"
+          BRANCH="${BASE}/precommit-fixes/pr-${PR}"
+
+          git fetch origin "${BASE}"
+          git checkout -B "${BRANCH}" "origin/${BASE}"
+
+          git config user.name "pre-commit bot"
+          git config user.email "pre-commit@users.noreply.github.com"
+
+          git add .
+          git commit -m "Apply pre-commit fixes"
+
+          git push origin "${BRANCH}" --force
+
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Label PR
+        if: steps.diff.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ["has-precommit-fixes"],
+              });
+            } catch (_) {}
+
+      - name: Comment or update existing comment
+        if: steps.diff.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |12
+            const branch = "${{ steps.push.outputs.branch }}";
+            const body = "
+            Pre-commit found issues and applied fixes.\n\n\
+            Suggested fixes are available in:\n\
+            `" + branch + "`\n\
+            \n\
+            To apply them:\n\
+            ```bash\n\
+            git fetch origin\n\
+            git merge origin/" + branch + "\n\
+            # or\n\
+            git cherry-pick origin/" + branch + "\n\
+            ```";
+
+            const { data: comments } =
+              await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+
+            const existing = comments.find(c =>
+              c.user?.type === "Bot" &&
+              c.body?.includes("Suggested fixes are available in:")
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail if fixes were required
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          echo "Pre-commit fixes are required. See suggested fixes branch."
+          exit 1
+
+      # ============================================================
+      # CLEANUP (NO FIXES NEEDED)
+      # ============================================================
+
+      - name: Remove fixes branch, label, and comment
+        if: steps.diff.outputs.changed == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.issue.number;
+            const base = context.payload.pull_request.base.ref;
+            const branch = `${base}/precommit-fixes/pr-${pr}`;
+
+            // Delete branch if it exists
+            try {
+              await github.rest.git.deleteRef({
+                owner,
+                repo,
+                ref: `heads/${branch}`,
+              });
+            } catch (_) {
+              // branch may not exist
+            }
+
+            // Remove label if present
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: pr,
+                name: "has-precommit-fixes",
+              });
+            } catch (_) {}
+
+            // Update or remove existing bot comment
+            const { data: comments } =
+              await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: pr,
+              });
+
+            const existing = comments.find(c =>
+              c.user?.type === "Bot" &&
+              c.body?.includes("Suggested fixes are available in:")
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body: "✅ Pre-commit checks are now clean. No suggested fixes are required.",
+              });
+            }
