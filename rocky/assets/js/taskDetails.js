@@ -267,6 +267,7 @@ function renderHexTable(hex_table, bytes) {
         ascii.push("."); // placeholder char
       }
     }
+
     row.addEventListener("mouseover", (event) => {
       let charposition = Array.from(event.target.parentNode.children).indexOf(
         event.target,
@@ -284,6 +285,7 @@ function renderHexTable(hex_table, bytes) {
           highlightedstring;
       }
     });
+
     row.addEventListener("mouseout", (event) => {
       event.target.parentElement.querySelector(".ascii").innerText = 
         event.target.parentElement.querySelector(".ascii").innerText;
