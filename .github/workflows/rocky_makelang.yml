@@ -94,7 +94,7 @@ jobs:
       - name: Create and push translation fixes branch
         if: steps.diff.outputs.changed == 'true'
         id: push
-        run: |10
+        run: |
           BASE="${{ github.event.pull_request.base.ref }}"
           PR="${{ github.event.pull_request.number }}"
           BRANCH="${BASE}/translation-fixes/pr-${PR}"
@@ -120,7 +120,7 @@ jobs:
         if: steps.diff.outputs.changed == 'true'
         uses: actions/github-script@v7
         with:
-          script: |12
+          script: |
             const branch = "${{ steps.push.outputs.branch }}";
             const body = `
             🌍 **Translations were out of date and have been updated automatically.**
@@ -183,7 +183,7 @@ jobs:
         if: steps.diff.outputs.changed == 'false'
         uses: actions/github-script@v7
         with:
-          script: |12
+          script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const pr = context.issue.number;
