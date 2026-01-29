@@ -53,7 +53,7 @@ jobs:
         run: |
           BASE="${{ github.event.pull_request.base.ref }}"
           PR="${{ github.event.pull_request.number }}"
-          BRANCH="${BASE}/precommit-fixes/pr-${PR}"
+          BRANCH="precommit-fixes/pr-${PR}"
 
           git fetch origin "${BASE}"
           git checkout -B "${BRANCH}" "origin/${BASE}"
