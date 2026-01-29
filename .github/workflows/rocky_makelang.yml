@@ -56,7 +56,7 @@ jobs:
       # GENERATE / UPDATE TRANSLATIONS
       # ============================================================
 
-      - name: Generate POT file
+      - name: Update translation template (.pot)
         working-directory: ./rocky
         env:
           BYTES_API: http://bytes:8000
@@ -68,23 +68,32 @@ jobs:
           SECRET_KEY: whatever
         run: make lang
 
-      - name: Update translations
-        working-directory: ./rocky
-        run: |
-          # adjust this to your actual translation command(s)
-          make translations
-
       # ============================================================
       # DETECT CHANGES
       # ============================================================
-
-      - name: Detect translation changes
+      - name: Detect translation template changes
         id: diff
         run: |
-          if git diff --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
+          set -e
+      
+          POT="rocky/rocky/locale/django.pot"
+      
+          unexpected=$(git diff --name-only | while read -r file; do
+            if [ "$file" != "$POT" ]; then
+              echo "$file"
+            fi
+          done)
+      
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected files changed by make lang:"
+            echo "$unexpected"
+            exit 1
+          fi
+      
+          if git diff "$POT" | grep -E '^[+-](msgid|msgstr)' >/dev/null; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
       # ============================================================
