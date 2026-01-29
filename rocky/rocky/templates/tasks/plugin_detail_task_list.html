@@ -1,5 +1,4 @@
 {% load i18n %}
-{% load compress %}
 
 <div class="horizontal-scroll">
     <h2>{% translate "Tasks" %}</h2>
@@ -64,8 +63,6 @@
 
 {% block html_at_end_body %}
     {{ block.super }}
-    {% compress js %}
-        <script src="{% static "js/taskDetails.js" %}" nonce="{{ request.csp_nonce }}"></script>
-        <script src="{% static "js/tabs.js" %}" nonce="{{ request.csp_nonce }}"></script>
-    {% endcompress %}
+    <script src="{% static "js/taskDetails.js" %}" nonce="{{ request.csp_nonce }}"></script>
+    <script src="{% static "js/tabs.js" %}" nonce="{{ request.csp_nonce }}"></script>
 {% endblock html_at_end_body %}
