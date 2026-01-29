@@ -6,7 +6,7 @@ OpenKAT aims to monitor, record and analyze the status of information systems. T
 
 OpenKAT scans, collects, analyzes and reports in an ongoing process:
 
-.. image:: docs/source/basics/img/flowopenkat.png
+.. image:: docs/source/about-openkat/img/flowopenkat.png
   :alt: flow of OpenKAT
 
 OpenKAT scans networks, finds vulnerabilities and creates accessible reports. It integrates the most widely used network tools and scanning software into a modular framework, accesses external databases such as shodan, and combines the information from all these sources into clear reports. It also includes lots of cat hair.
@@ -30,8 +30,8 @@ Brochures
 
 The high level documentation on OpenKAT explains the purpose and operation of OpenKAT at the management level:
 
-- `the 'TL;DR' of 2 pages (English) <https://github.com/minvws/nl-kat-coordination/blob/main/docs/source/introduction/pdf/OpenKAT%20handout_ENG.pdf>`_
-- `the extensive brochure on OpenKAT (Dutch) <https://github.com/minvws/nl-kat-coordination/blob/main/docs/source/introduction/pdf/introductie%20OpenKAT%20V20220621.pdf>`_
+- `the 'TL;DR' of 2 pages (English) <https://github.com/minvws/nl-kat-coordination/blob/main/docs/source/about-openkat/pdf/OpenKAT%20handout_ENG.pdf>`_
+- `the extensive brochure on OpenKAT (Dutch) <https://github.com/minvws/nl-kat-coordination/blob/main/docs/source/about-openkat/pdf/introductie%20OpenKAT%20V20220621.pdf>`_
 
 Current release
 ===============
