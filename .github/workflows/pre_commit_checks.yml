@@ -86,7 +86,7 @@ jobs:
         if: steps.diff.outputs.changed == 'true'
         uses: actions/github-script@v7
         with:
-          script: |12
+          script: |
             const branch = "${{ steps.push.outputs.branch }}";
             const body = "
             Pre-commit found issues and applied fixes.\n\n\
