@@ -107,9 +107,8 @@ jobs:
           BASE="${{ github.event.pull_request.base.ref }}"
           PR="${{ github.event.pull_request.number }}"
           BRANCH="translation-fixes/pr-${PR}"
-
-          git fetch origin "${BASE}"
-          git checkout -B "${BRANCH}" "origin/${BASE}"
+          
+          git checkout -B "${BRANCH}"
 
           git config user.name "translation bot"
           git config user.email "translations@users.noreply.github.com"
@@ -197,7 +196,7 @@ jobs:
             const repo = context.repo.repo;
             const pr = context.issue.number;
             const base = context.payload.pull_request.base.ref;
-            const branch = `${base}/translation-fixes/pr-${pr}`;
+            const branch = `translation-fixes/pr-${pr}`;
 
             try {
               await github.rest.git.deleteRef({
