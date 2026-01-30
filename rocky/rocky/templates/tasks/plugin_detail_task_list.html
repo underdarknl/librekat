@@ -60,7 +60,6 @@
 
     {% endif %}
 </div>
-
 {% block html_at_end_body %}
     {{ block.super }}
     <script src="{% static "js/taskDetails.js" %}" nonce="{{ request.csp_nonce }}"></script>

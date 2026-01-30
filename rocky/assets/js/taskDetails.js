@@ -123,8 +123,8 @@ task_buttons.forEach((button) => {
             object_list += `<li><a href='${url}/objects/detail/?observed_at=${data["valid_time_async"]}&ooi_id=${escapeHTMLEntities(encodeURIComponent(object))}'>${escapeHTMLEntities(object)}</a></li>`;
           });
           yielded_objects_element.innerHTML = `<ul>${object_list}</ul>`;
-        } else if(task_type == "normalizer") {
-          yielded_objects_element.innerHTML = 
+        } else if (task_type == "normalizer") {
+          yielded_objects_element.innerHTML =
             "<p class='explanation'>task yielded no objects.</p>";
         }
         expando_row
@@ -191,13 +191,13 @@ task_buttons.forEach((button) => {
               <ul class="tags">${mimetypes}</ul>
             <p>Secure Hash: <code>${rawfile["secure_hash"]} ${signed}</code></p>`;
             rawfiles_list.appendChild(rawfile_container);
-            rawfile_container.querySelector("pre.plain code").innerText = 
+            rawfile_container.querySelector("pre.plain code").innerText =
               rawdata;
             // Try and populate Json view
             try {
               jsondata = JSON.parse(rawdata);
-              rawfile_container.querySelector("pre.json").innerText = 
-                JSON.stringify(jsondata, null, "\t")
+              rawfile_container.querySelector("pre.json").innerText =
+                JSON.stringify(jsondata, null, "\t");
               rawfile_container
                 .querySelector(`#json-${rawfile["id"]}-panel`)
                 .classList.remove("hidden");
@@ -219,7 +219,6 @@ task_buttons.forEach((button) => {
           });
 
           rawfiles_element.appendChild(rawfiles_list);
-          
         } else if (task_type == "boefje") {
           rawfiles_element.innerHTML =
             "<p class='explanation'>Task yielded no raw files.</p>";
@@ -273,27 +272,27 @@ function renderHexTable(hex_table, bytes) {
         event.target,
       );
       if (charposition > 0) {
-        let asciistring = 
+        let asciistring =
           event.target.parentElement.querySelector(".ascii").textContent;
-        let highlightedstring = 
-          escapeHTMLEntities(asciistring.substring(0, charposition-1)) +
+        let highlightedstring =
+          escapeHTMLEntities(asciistring.substring(0, charposition - 1)) +
           "<span class='highlight'>" +
-          escapeHTMLEntities(asciistring.charAt(charposition-1)) +
+          escapeHTMLEntities(asciistring.charAt(charposition - 1)) +
           "</span>" +
           escapeHTMLEntities(asciistring.substring(charposition));
-        event.target.parentElement.querySelector(".ascii").innerHTML = 
+        event.target.parentElement.querySelector(".ascii").innerHTML =
           highlightedstring;
       }
     });
 
     row.addEventListener("mouseout", (event) => {
-      event.target.parentElement.querySelector(".ascii").innerText = 
+      event.target.parentElement.querySelector(".ascii").innerText =
         event.target.parentElement.querySelector(".ascii").innerText;
     });
 
     row.innerHTML =
       `<td>${offset}</td>` +
-      hexBytes.map(b => `<td>${b}</td>`).join("") +
+      hexBytes.map((b) => `<td>${b}</td>`).join("") +
       `<td class="ascii">${ascii.join("")}</td>`;
     hex_table.appendChild(row);
   }
