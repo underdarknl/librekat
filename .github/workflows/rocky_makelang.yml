@@ -75,21 +75,21 @@ jobs:
         id: diff
         run: |
           set -e
-      
+
           POT="rocky/rocky/locale/django.pot"
-      
+
           unexpected=$(git diff --name-only | while read -r file; do
             if [ "$file" != "$POT" ]; then
               echo "$file"
             fi
           done)
-      
+
           if [ -n "$unexpected" ]; then
             echo "Unexpected files changed by make lang:"
             echo "$unexpected"
             exit 1
           fi
-      
+
           if git diff "$POT" | grep -E '^[+-](msgid|msgstr)' >/dev/null; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
@@ -129,19 +129,33 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const branch = "${{ steps.push.outputs.branch }}";
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prBranch = context.payload.pull_request.head.ref;
+            const fixesBranch = "${{ steps.push.outputs.branch }}";
+
+            const compareUrl =
+              `https://github.com/${owner}/${repo}/compare/${prBranch}...${fixesBranch}`;
+
+            const prUrl =
+              `${compareUrl}?expand=1`;
+
             const body = `
             🌍 **Translations were out of date and have been updated automatically.**
 
             Suggested fixes are available in:
-            \`${branch}\`
+            \`${fixesBranch}\`
 
-            To apply them:
+            ### Review & apply in GitHub
+            - 🔍 **View diff:** ${compareUrl}
+            - 🔁 **Open a PR with fixes:** ${prUrl}
+
+            ### Apply locally
             \`\`\`bash
             git fetch origin
-            git merge origin/${branch}
+            git merge origin/${fixesBranch}
             # or
-            git cherry-pick origin/${branch}
+            git cherry-pick origin/${fixesBranch}
             \`\`\`
             `;
 
