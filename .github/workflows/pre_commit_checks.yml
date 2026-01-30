@@ -46,12 +46,11 @@ jobs:
           echo "changed=true" >> "$GITHUB_OUTPUT"
       
           if git diff --name-only | grep -q "^.github/"; then
-            echo "github_changed=true" >> "$GITHUB_OUTPUT"
             {
-              echo "github_changes<<EOF"
+              echo "GITHUB_DIFF<<EOF"
               git diff .github | head -c 60000
               echo "EOF"
-            } >> "$GITHUB_OUTPUT"
+            } >> "$GITHUB_ENV"
           else
             echo "github_changed=false" >> "$GITHUB_OUTPUT"
           fi
@@ -177,7 +176,7 @@ jobs:
             echo "<summary>Show diff for <code>.github/</code> files</summary>"
             echo
             echo '```diff'
-            echo "${{ steps.diff.outputs.github_changes }}"
+            echo "$GITHUB_DIFF"
             echo '```'
             echo
             echo "</details>"
