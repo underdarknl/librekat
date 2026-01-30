@@ -191,12 +191,33 @@ jobs:
             </details>
             `;
 
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: context.issue.number,
-              body,
-            });
+            const { data: comments } =
+              await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: context.issue.number,
+              });
+
+            const existing = comments.find(c =>
+              c.user?.type === "Bot" &&
+              c.body?.includes("Pre-commit modified files under `.github/`")
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
 
       - name: Fail if .github changes exist
         if: steps.diff.outputs.github_changed == 'true'
@@ -214,39 +235,19 @@ jobs:
       # CLEANUP (NO FIXES NEEDED)
       # ============================================================
 
-      - name: Remove fixes branch, label, and comment
-        if: steps.diff.outputs.any_changed == 'false'
+      - name: Cleanup branch/labels/comments
+        if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const pr = context.issue.number;
-            const base = context.payload.pull_request.base.ref;
-            const branch = `precommit-fixes/pr-${pr}`;
 
-            // Delete branch if it exists
-            try {
-              await github.rest.git.deleteRef({
-                owner,
-                repo,
-                ref: `heads/${branch}`,
-              });
-            } catch (_) {
-              // branch may not exist
-            }
+            const anyChanged = "${{ steps.diff.outputs.any_changed }}" === "true";
+            const nonGithubChanged = "${{ steps.diff.outputs.non_github_changed }}" === "true";
+            const githubChanged = "${{ steps.diff.outputs.github_changed }}" === "true";
 
-            // Remove label if present
-            try {
-              await github.rest.issues.removeLabel({
-                owner,
-                repo,
-                issue_number: pr,
-                name: "has-precommit-fixes",
-              });
-            } catch (_) {}
-
-            // Update or remove existing bot comment
             const { data: comments } =
               await github.rest.issues.listComments({
                 owner,
@@ -254,30 +255,108 @@ jobs:
                 issue_number: pr,
               });
 
-            const precommitFixesComment = comments.find(c =>
+            const fixesComment = comments.find(c =>
               c.user?.type === "Bot" &&
               c.body?.includes("**Pre-commit applied suggested fixes**")
             );
 
-            const githubOnlyComment = comments.find(c =>
+            const githubComment = comments.find(c =>
               c.user?.type === "Bot" &&
               c.body?.includes("Pre-commit modified files under `.github/`")
             );
 
-            if (precommitFixesComment) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: precommitFixesComment.id,
-                body: "✅ Pre-commit checks are now clean. No suggested fixes are required.",
-              });
+            const branch = `precommit-fixes/pr-${pr}`;
+
+            // ============================
+            // PR CLEAN (no changes)
+            // ============================
+            if (!anyChanged) {
+              // delete branch
+              try {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `heads/${branch}`,
+                });
+              } catch (_) {}
+
+              // remove label
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: pr,
+                  name: "has-precommit-fixes",
+                });
+              } catch (_) {}
+
+              // update existing comments
+              if (fixesComment) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: fixesComment.id,
+                  body: "✅ Pre-commit checks are now clean. No suggested fixes are required.",
+                });
+              }
+              if (githubComment) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: githubComment.id,
+                  body: "✅ Pre-commit on .github files checks are now clean. No suggested fixes are required.",
+                });
+              }
+
+              return;
             }
 
-            if (githubOnlyComment) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: githubOnlyComment.id,
-                body: "✅ Pre-commit checks are now clean. No suggested fixes are required.",
-              });
+            // ============================
+            // ONLY .github CHANGES
+            // ============================
+            if (githubChanged && !nonGithubChanged) {
+              // Keep .github comment, update if needed
+              const body = `
+              ⚠️ **Pre-commit suggested changes in \`.github/\`**
+
+              Pre-commit modified files under \`.github/\`, which **cannot be applied automatically** by this workflow due to GitHub permission restrictions.
+
+              Please review and commit these changes manually in your PR branch.
+
+              <details>
+              <summary>Show diff</summary>
+
+              \`\`\`diff
+              ${process.env.GITHUB_DIFF || "(diff truncated)"}
+              \`\`\`
+              </details>
+              `;
+
+              if (githubComment) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: githubComment.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: pr,
+                  body,
+                });
+              }
+
+              // Keep fixes comment/branch/label untouched
+              return;
+            }
+
+            // ============================
+            // NON-.github CHANGES (with or without .github)
+            // ============================
+            if (nonGithubChanged) {
+              // Keep label/branch/comment as-is.
+              // (You could also update the comment if needed.)
+              return;
             }
