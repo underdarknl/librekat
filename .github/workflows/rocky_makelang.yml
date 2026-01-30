@@ -56,7 +56,7 @@ jobs:
       # GENERATE / UPDATE TRANSLATIONS
       # ============================================================
 
-      - name: Generate POT file
+      - name: Update translation template (.pot)
         working-directory: ./rocky
         env:
           BYTES_API: http://bytes:8000
@@ -68,23 +68,32 @@ jobs:
           SECRET_KEY: whatever
         run: make lang
 
-      - name: Update translations
-        working-directory: ./rocky
-        run: |
-          # adjust this to your actual translation command(s)
-          make translations
-
       # ============================================================
       # DETECT CHANGES
       # ============================================================
-
-      - name: Detect translation changes
+      - name: Detect translation template changes
         id: diff
         run: |
-          if git diff --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
+          set -e
+
+          POT="rocky/rocky/locale/django.pot"
+
+          unexpected=$(git diff --name-only | while read -r file; do
+            if [ "$file" != "$POT" ]; then
+              echo "$file"
+            fi
+          done)
+
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected files changed by make lang:"
+            echo "$unexpected"
+            exit 1
+          fi
+
+          if git diff "$POT" | grep -E '^[+-](msgid|msgstr)' >/dev/null; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
       # ============================================================
@@ -94,13 +103,12 @@ jobs:
       - name: Create and push translation fixes branch
         if: steps.diff.outputs.changed == 'true'
         id: push
-        run: |10
+        run: |
           BASE="${{ github.event.pull_request.base.ref }}"
           PR="${{ github.event.pull_request.number }}"
-          BRANCH="${BASE}/translation-fixes/pr-${PR}"
+          BRANCH="translation-fixes/pr-${PR}"
 
-          git fetch origin "${BASE}"
-          git checkout -B "${BRANCH}" "origin/${BASE}"
+          git checkout -B "${BRANCH}"
 
           git config user.name "translation bot"
           git config user.email "translations@users.noreply.github.com"
@@ -112,6 +120,20 @@ jobs:
 
           echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
 
+      - name: Label PR
+        if: steps.diff.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ["has-language-update"],
+              });
+            } catch (_) {}
+
       # ============================================================
       # COMMENT ON PR
       # ============================================================
@@ -120,20 +142,34 @@ jobs:
         if: steps.diff.outputs.changed == 'true'
         uses: actions/github-script@v7
         with:
-          script: |12
-            const branch = "${{ steps.push.outputs.branch }}";
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prBranch = context.payload.pull_request.head.ref;
+            const fixesBranch = "${{ steps.push.outputs.branch }}";
+
+            const compareUrl =
+              `https://github.com/${owner}/${repo}/compare/${prBranch}...${fixesBranch}`;
+
+            const prUrl =
+              `${compareUrl}?expand=1`;
+
             const body = `
             🌍 **Translations were out of date and have been updated automatically.**
 
             Suggested fixes are available in:
-            \`${branch}\`
+            \`${fixesBranch}\`
 
-            To apply them:
+            ### Review & apply in GitHub
+            - 🔍 **View diff:** ${compareUrl}
+            - 🔁 **Open a PR with fixes:** ${prUrl}
+
+            ### Apply locally
             \`\`\`bash
             git fetch origin
-            git merge origin/${branch}
+            git merge origin/${fixesBranch}
             # or
-            git cherry-pick origin/${branch}
+            git cherry-pick origin/${fixesBranch}
             \`\`\`
             `;
 
@@ -183,18 +219,29 @@ jobs:
         if: steps.diff.outputs.changed == 'false'
         uses: actions/github-script@v7
         with:
-          script: |12
+          script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const pr = context.issue.number;
             const base = context.payload.pull_request.base.ref;
-            const branch = `${base}/translation-fixes/pr-${pr}`;
+            const branch = `translation-fixes/pr-${pr}`;
 
+            // Delete branch if it exists
             try {
               await github.rest.git.deleteRef({
                 owner,
                 repo,
                 ref: `heads/${branch}`,
+              });
+            } catch (_) {}
+
+            // Remove label if present
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: pr,
+                name: "has-language-update",
               });
             } catch (_) {}
 
