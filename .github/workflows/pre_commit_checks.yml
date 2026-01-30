@@ -39,9 +39,23 @@ jobs:
         run: |
           if git diff --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "github_changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+      
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      
+          if git diff --name-only | grep -q "^.github/"; then
+            echo "github_changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "github_changes<<EOF"
+              git diff .github | head -c 60000
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "github_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+         
 
       # ============================================================
       # CREATE / UPDATE FIXES
@@ -60,8 +74,8 @@ jobs:
           git config user.name "pre-commit bot"
           git config user.email "pre-commit@users.noreply.github.com"
 
-          git add .
-          git commit -m "Apply pre-commit fixes"
+          git add --all :^\.github
+          git commit -m "Apply pre-commit fixes (excluding .github)"
 
           git push origin "${BRANCH}" --force
 
@@ -146,6 +160,30 @@ jobs:
         if: steps.diff.outputs.changed == 'true'
         run: |
           echo "Pre-commit fixes are required. See suggested fixes branch."
+          exit 1
+
+      - name: Fail if .github changes exist
+        if: steps.diff.outputs.github_changed == 'true'
+        run: |
+          {
+            echo "## ⚠️ Pre-commit modified files under \`.github/\`"
+            echo
+            echo "**These changes cannot be applied automatically.**"
+            echo
+            echo "GitHub restricts workflows from modifying files under \`.github/\` (especially workflows) without elevated permissions."
+            echo "Please review the diff below and commit these changes manually in your PR branch."
+            echo
+            echo "<details>"
+            echo "<summary>Show diff for <code>.github/</code> files</summary>"
+            echo
+            echo '```diff'
+            echo "${{ steps.diff.outputs.github_changes }}"
+            echo '```'
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+      
+          echo "Pre-commit modified .github files — manual intervention required."
           exit 1
 
       # ============================================================
