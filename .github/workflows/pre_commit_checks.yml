@@ -265,13 +265,12 @@ jobs:
               c.body?.includes("Pre-commit modified files under `.github/`")
             );
 
-            const branch = `precommit-fixes/pr-${pr}`;
-
             // ============================
-            // PR CLEAN (no changes)
+            // PR CLEAN (no changes required anymore)
             // ============================
             if (!anyChanged) {
               // delete branch
+              const branch = `precommit-fixes/pr-${pr}`;
               try {
                 await github.rest.git.deleteRef({
                   owner,
@@ -289,7 +288,9 @@ jobs:
                   name: "has-precommit-fixes",
                 });
               } catch (_) {}
+            }
 
+            if (!nonGithubChanged){
               // update existing comments
               if (fixesComment) {
                 await github.rest.issues.updateComment({
@@ -299,6 +300,9 @@ jobs:
                   body: "✅ Pre-commit checks are now clean. No suggested fixes are required.",
                 });
               }
+            }
+
+            if (!githubChanged){
               if (githubComment) {
                 await github.rest.issues.updateComment({
                   owner,
@@ -307,56 +311,4 @@ jobs:
                   body: "✅ Pre-commit on .github files checks are now clean. No suggested fixes are required.",
                 });
               }
-
-              return;
-            }
-
-            // ============================
-            // ONLY .github CHANGES
-            // ============================
-            if (githubChanged && !nonGithubChanged) {
-              // Keep .github comment, update if needed
-              const body = `
-              ⚠️ **Pre-commit suggested changes in \`.github/\`**
-
-              Pre-commit modified files under \`.github/\`, which **cannot be applied automatically** by this workflow due to GitHub permission restrictions.
-
-              Please review and commit these changes manually in your PR branch.
-
-              <details>
-              <summary>Show diff</summary>
-
-              \`\`\`diff
-              ${process.env.GITHUB_DIFF || "(diff truncated)"}
-              \`\`\`
-              </details>
-              `;
-
-              if (githubComment) {
-                await github.rest.issues.updateComment({
-                  owner,
-                  repo,
-                  comment_id: githubComment.id,
-                  body,
-                });
-              } else {
-                await github.rest.issues.createComment({
-                  owner,
-                  repo,
-                  issue_number: pr,
-                  body,
-                });
-              }
-
-              // Keep fixes comment/branch/label untouched
-              return;
-            }
-
-            // ============================
-            // NON-.github CHANGES (with or without .github)
-            // ============================
-            if (nonGithubChanged) {
-              // Keep label/branch/comment as-is.
-              // (You could also update the comment if needed.)
-              return;
             }
