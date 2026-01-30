@@ -42,10 +42,12 @@ jobs:
             echo "github_changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-      
+
           echo "changed=true" >> "$GITHUB_OUTPUT"
-      
+
           if git diff --name-only | grep -q "^.github/"; then
+            echo "github_changed=true" >> "$GITHUB_OUTPUT"
+
             {
               echo "GITHUB_DIFF<<EOF"
               git diff .github | head -c 60000
@@ -54,7 +56,6 @@ jobs:
           else
             echo "github_changed=false" >> "$GITHUB_OUTPUT"
           fi
-         
 
       # ============================================================
       # CREATE / UPDATE FIXES
@@ -103,22 +104,22 @@ jobs:
             const repo = context.repo.repo;
             const prBranch = context.payload.pull_request.head.ref;
             const fixesBranch = "${{ steps.push.outputs.branch }}";
-            
+
             const compareUrl =
               `https://github.com/${owner}/${repo}/compare/${prBranch}...${fixesBranch}`;
-            
-            const prUrl =
-              `${compareUrl}?expand=1`;
-            
-             const body = "
-            Pre-commit found issues and applied fixes.\n\n\
-            Suggested fixes are available in:\n\
-            `" + fixesBranch + "`\n\
-            
+
+            const prUrl = `${compareUrl}?expand=1`;
+
+            const body = `
+            🛠 **Pre-commit applied suggested fixes**
+
+            Suggested fixes are available in:
+            \`${fixesBranch}\`
+
             ### Review & apply in GitHub
             - 🔍 **View diff:** ${compareUrl}
             - 🔁 **Open a PR with fixes:** ${prUrl}
-            
+
             ### Apply locally
             \`\`\`bash
             git fetch origin
@@ -127,10 +128,11 @@ jobs:
             git cherry-pick origin/${fixesBranch}
             \`\`\`
             `;
+
             const { data: comments } =
               await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner,
+                repo,
                 issue_number: context.issue.number,
               });
 
@@ -141,20 +143,20 @@ jobs:
 
             if (existing) {
               await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner,
+                repo,
                 comment_id: existing.id,
                 body,
               });
             } else {
               await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner,
+                repo,
                 issue_number: context.issue.number,
                 body,
               });
             }
-
+  
       - name: Fail if fixes were required
         if: steps.diff.outputs.changed == 'true'
         run: |
@@ -181,7 +183,7 @@ jobs:
             echo
             echo "</details>"
           } >> "$GITHUB_STEP_SUMMARY"
-      
+
           echo "Pre-commit modified .github files — manual intervention required."
           exit 1
 
