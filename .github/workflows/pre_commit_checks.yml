@@ -138,7 +138,7 @@ jobs:
 
             const existing = comments.find(c =>
               c.user?.type === "Bot" &&
-              c.body?.includes("Suggested fixes are available in:")
+              c.body?.includes("**Pre-commit applied suggested fixes**")
             );
 
             if (existing) {
@@ -156,12 +156,6 @@ jobs:
                 body,
               });
             }
-  
-      - name: Fail if fixes were required
-        if: steps.diff.outputs.changed == 'true'
-        run: |
-          echo "Pre-commit fixes are required. See suggested fixes branch."
-          exit 1
 
       - name: Fail if .github changes exist
         if: steps.diff.outputs.github_changed == 'true'
@@ -185,6 +179,12 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
           echo "Pre-commit modified .github files — manual intervention required."
+          exit 1
+
+      - name: Fail if fixes were required
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          echo "Pre-commit fixes are required. See suggested fixes branch."
           exit 1
 
       # ============================================================
