@@ -107,7 +107,7 @@ jobs:
           BASE="${{ github.event.pull_request.base.ref }}"
           PR="${{ github.event.pull_request.number }}"
           BRANCH="translation-fixes/pr-${PR}"
-          
+
           git checkout -B "${BRANCH}"
 
           git config user.name "translation bot"
